@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: todo-mysql
+    restart: unless-stopped
+    env_file:
+      - ./Backend/TODO/.env  # 👈 Share the same env file so MySQL can read ${DB_PASSWORD} too!
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: taskdb
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-p$${DB_PASSWORD}"] # Note the double $$ for escaping in Compose
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - todo-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: todo-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks:
+      - todo-network
+
+  backend:
+    build:
+      context: ./Backend/TODO
+      dockerfile: Dockerfile
+    container_name: todo-backend
+    restart: unless-stopped
+    env_file:
+      - ./Backend/TODO/.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - todo-network
+
+  frontend:
+    build:
+      context: ./Frontend/TODO-front
+      dockerfile: dockerfile
+    container_name: todo-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - todo-network
+
+networks:
+  todo-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
