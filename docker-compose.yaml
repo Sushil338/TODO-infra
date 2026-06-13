@@ -6,7 +6,7 @@ services:
     container_name: todo-mysql
     restart: unless-stopped
     env_file:
-      - ./Backend/TODO/.env  # 👈 Share the same env file so MySQL can read ${DB_PASSWORD} too!
+      - ../Backend/TODO/.env  # 👈 Share the same env file so MySQL can read ${DB_PASSWORD} too!
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: taskdb
@@ -38,12 +38,12 @@ services:
 
   backend:
     build:
-      context: ./Backend/TODO
+      context: ../Backend/TODO
       dockerfile: Dockerfile
     container_name: todo-backend
     restart: unless-stopped
     env_file:
-      - ./Backend/TODO/.env
+      - ../Backend/TODO/.env
     ports:
       - "8080:8080"
     depends_on:
@@ -56,10 +56,12 @@ services:
 
   frontend:
     build:
-      context: ./Frontend/TODO-front
+      context: ../Frontend/TODO-front
       dockerfile: dockerfile
     container_name: todo-frontend
     restart: unless-stopped
+    env_file:
+      - ../Frontend/TODO-front/.env
     ports:
       - "80:80"
     depends_on:
