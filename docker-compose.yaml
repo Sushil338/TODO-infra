@@ -58,6 +58,8 @@ services:
     build:
       context: ../Frontend/TODO-front
       dockerfile: dockerfile
+      args:
+        - VITE_API_URL=http://16.170.236.230/api
     container_name: todo-frontend
     restart: unless-stopped
     env_file:
